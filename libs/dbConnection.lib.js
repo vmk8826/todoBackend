@@ -20,11 +20,17 @@ export const dbConnection = async () => {
     
     console.log("Connecting to MongoDB...");
     
-    // Very simple connection options - minimal to avoid issues
+    // Connect to MongoDB
     const conn = await mongoose.connect(MONGODB_URI);
     
     isConnected = true;
     console.log("MongoDB connected successfully");
+    
+    // Add disconnect handler
+    mongoose.connection.on('disconnected', () => {
+      console.log('MongoDB disconnected');
+      isConnected = false;
+    });
     
     return conn;
   } catch (error) {
