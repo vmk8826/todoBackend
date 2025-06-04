@@ -11,14 +11,14 @@ export const register = async (req, res) => {
     }
 
     const existingUser = await User.findOne({ email });
-
+    console.log('User Checker', existingUser)
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({ name, email, password: hashedPassword });
-    
+    console.log('User Created', user)
     const token = await jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
         expiresIn: "24h",
     });
@@ -28,11 +28,11 @@ export const register = async (req, res) => {
       secure: process.env.NODE_ENV !== "development",
       maxAge: 24 * 60 * 60 * 1000,
     });
-
+    console.log('Token Created', token)
     res.status(201).json({ success: true, message: "User created successfully", user });
 
   } catch (error) {
-
+    console.log('Error', error)
     res.status(500).json({ message: "Internal server error" });
 
   }
