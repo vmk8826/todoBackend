@@ -21,7 +21,7 @@ app.use(
   })
 );
 
-app.use("/internal/v1", authRoutes);
+app.use("/api/v1", authRoutes);
 app.use("/task/v1", taskRoutes);
 
 dbConnection();
