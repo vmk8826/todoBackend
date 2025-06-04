@@ -21,8 +21,11 @@ app.use(
       if(!origin) return callback(null, true);
       
       const allowedOrigins = [
-        'http://localhost:3001', 
-        process.env.FRONTEND_URL
+        'http://localhost:3001',
+        'https://localhost:3001',
+        process.env.FRONTEND_URL,
+        'https://todo-app-frontend.vercel.app',  // Add your frontend URL here
+        'https://task-app-frontend.vercel.app'
       ].filter(Boolean);
       
       if(allowedOrigins.indexOf(origin) !== -1 || !origin) {
@@ -35,11 +38,15 @@ app.use(
   })
 );
 
+// Add a test route to check if the server is running
+app.get("/", (req, res) => {
+  res.status(200).json({ message: "Server is running" });
+});
+
 app.use("/api/v1", authRoutes);
 app.use("/task/v1", taskRoutes);
 
 dbConnection();
-app.listen(process.env.PORT, (req, res) => {
-  console.log(`Server is running on port ${process.env.PORT}`);
-  res.status(200).json({ message: "Server is running" });
+app.listen(process.env.PORT || 3000, () => {
+  console.log(`Server is running on port ${process.env.PORT || 3000}`);
 });
