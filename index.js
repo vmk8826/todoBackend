@@ -39,6 +39,7 @@ app.use("/api/v1", authRoutes);
 app.use("/task/v1", taskRoutes);
 
 dbConnection();
-app.listen(process.env.PORT, () => {
+app.listen(process.env.PORT, (req, res) => {
   console.log(`Server is running on port ${process.env.PORT}`);
+  res.status(200).json({ message: "Server is running" });
 });
