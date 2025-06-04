@@ -6,6 +6,7 @@ import { dbConnection } from "./libs/dbConnection.lib.js";
 import cors from "cors";
 import authRoutes from "./routes/auth.routes.js";
 import taskRoutes from "./routes/task.routes.js";
+import { testMongoConnection } from './mongodb-test.js';
 
 dotenv.config();
 
@@ -96,25 +97,30 @@ app.get("/api/mongo-direct-test", async (req, res) => {
     
     console.log("Attempting direct MongoDB connection");
     
-    // Create a new mongoose connection to avoid interfering with existing one
-    const testConn = await mongoose.createConnection(uri, {
-      serverSelectionTimeoutMS: 30000,
-      connectTimeoutMS: 30000,
-      socketTimeoutMS: 45000
-    });
+    // Create a new mongoose connection 
+    const conn = await mongoose.createConnection(uri).asPromise();
     
     console.log("Connection established");
     
-    // Test if we can run a simple command
-    const result = await testConn.db.admin().ping();
+    // Check if connection was successful
+    const isConnected = conn.readyState === 1;
     
-    // Close the test connection
-    await testConn.close();
+    // List collections as a simple test
+    let collections = [];
+    if (isConnected) {
+      collections = await conn.db.listCollections().toArray();
+      console.log("Collections found:", collections.length);
+    }
+    
+    // Close the connection
+    await conn.close();
     
     res.status(200).json({
       success: true,
-      pingResult: result,
-      message: "MongoDB connection successful"
+      connected: isConnected,
+      collectionsCount: collections.length,
+      collectionNames: collections.map(c => c.name),
+      message: "MongoDB connection test completed"
     });
   } catch (error) {
     console.error("Direct MongoDB test failed:", error.message);
@@ -123,6 +129,20 @@ app.get("/api/mongo-direct-test", async (req, res) => {
       error: error.message,
       errorType: error.name,
       timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// Run the dedicated MongoDB test script
+app.get("/api/run-mongo-test", async (req, res) => {
+  try {
+    const result = await testMongoConnection(true); // true = return result instead of exiting
+    res.status(result.success ? 200 : 500).json(result);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      errorType: error.name
     });
   }
 });
