@@ -70,7 +70,7 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Debug endpoint - Check MongoDB environment variables
+// Debug endpoint
 app.get("/api/debug", (req, res) => {
   res.status(200).json({
     mongoEnv: {
@@ -79,6 +79,52 @@ app.get("/api/debug", (req, res) => {
     },
     serverTime: new Date().toISOString()
   });
+});
+
+// Direct MongoDB test endpoint
+app.get("/api/mongo-direct-test", async (req, res) => {
+  try {
+    console.log("Direct MongoDB test started");
+    
+    const uri = process.env.MONGO_URI;
+    if (!uri) {
+      return res.status(500).json({ 
+        success: false, 
+        error: "MONGO_URI not set" 
+      });
+    }
+    
+    console.log("Attempting direct MongoDB connection");
+    
+    // Create a new mongoose connection to avoid interfering with existing one
+    const testConn = await mongoose.createConnection(uri, {
+      serverSelectionTimeoutMS: 30000,
+      connectTimeoutMS: 30000,
+      socketTimeoutMS: 45000
+    });
+    
+    console.log("Connection established");
+    
+    // Test if we can run a simple command
+    const result = await testConn.db.admin().ping();
+    
+    // Close the test connection
+    await testConn.close();
+    
+    res.status(200).json({
+      success: true,
+      pingResult: result,
+      message: "MongoDB connection successful"
+    });
+  } catch (error) {
+    console.error("Direct MongoDB test failed:", error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      errorType: error.name,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 app.use("/api/v1", authRoutes);
